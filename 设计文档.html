@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>数理农场 · MathFarm 设计文档 v0.1</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', 'PingFang SC', sans-serif;
+    background: #f8faf7;
+    color: #1a2e1a;
+    padding: 40px;
+    line-height: 1.6;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  h1 { font-size: 28px; color: #2e7d32; margin-bottom: 4px; }
+  .subtitle { color: #888; font-size: 14px; margin-bottom: 28px; }
+  h2 { font-size: 18px; color: #1b5e20; margin: 32px 0 12px; border-left: 4px solid #4caf50; padding-left: 10px; }
+  h3 { font-size: 15px; color: #2e7d32; margin: 16px 0 8px; }
+  p, li { font-size: 14px; color: #444; margin-bottom: 6px; }
+  ul { padding-left: 18px; }
+
+  .card { background: #fff; border-radius: 16px; padding: 20px; margin-bottom: 16px; border: 1px solid #e8f0e8; }
+  .card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+  .crop-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+  .crop-table th { background: #f1f8e9; padding: 8px 10px; text-align: left; color: #2e7d32; }
+  .crop-table td { padding: 8px 10px; border-bottom: 1px solid #f0f0f0; vertical-align: top; }
+  .crop-table tr:last-child td { border-bottom: none; }
+  .formula { font-family: 'Courier New', monospace; background: #f5f5f5; padding: 2px 7px; border-radius: 5px; font-size: 12px; color: #333; }
+  .converge { color: #2e7d32; font-weight: 600; }
+  .diverge { color: #e53935; font-weight: 600; }
+
+  .phase-row { display: flex; gap: 10px; margin-top: 10px; }
+  .phase { flex: 1; background: #f9fbf7; border-radius: 12px; padding: 14px; border: 1px solid #e0ece0; }
+  .phase .num { font-size: 22px; font-weight: 700; color: #a5d6a7; margin-bottom: 4px; }
+  .phase .name { font-size: 13px; font-weight: 600; color: #2e7d32; margin-bottom: 6px; }
+  .phase ul { padding-left: 14px; }
+  .phase li { font-size: 12px; color: #666; }
+
+  .badge { display: inline-block; padding: 4px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; margin: 3px; }
+  .badge.gold { background: #fff8e1; color: #f57f17; border: 1px solid #ffe082; }
+  .badge.silver { background: #f5f5f5; color: #616161; border: 1px solid #e0e0e0; }
+  .badge.diamond { background: #e8eaf6; color: #3949ab; border: 1px solid #c5cae9; }
+
+  .quote { border-left: 3px solid #4caf50; padding: 10px 14px; background: #f1f8e9; border-radius: 0 10px 10px 0; font-size: 13px; color: #555; margin: 12px 0; font-style: italic; }
+  .divider { height: 1px; background: #e8f0e8; margin: 8px 0; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .layer { padding: 10px 14px; border-radius: 10px; margin-bottom: 8px; }
+  .layer.l1 { background: #e8f5e9; border-left: 4px solid #4caf50; }
+  .layer.l2 { background: #e3f2fd; border-left: 4px solid #1976d2; }
+  .layer.l3 { background: #fff3e0; border-left: 4px solid #f57c00; }
+  .layer.l4 { background: #f3e5f5; border-left: 4px solid #8e24aa; }
+  .layer .lt { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+  .layer .ld { font-size: 12px; color: #666; }
+
+  .biome { border-radius:16px; padding:16px 18px; margin-bottom:16px; border:1px solid #e8f0e8; background:#fff; }
+  .bhead { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+  .bicon { font-size:22px; }
+  .bname { font-size:17px; font-weight:700; }
+  .btag { font-size:11px; padding:2px 9px; border-radius:999px; font-weight:600; background:#e8f5e9; color:#2e7d32; }
+  .lands { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .land { border-radius:11px; padding:11px 13px; background:#fafdf9; border:1px solid #eef3ec; position:relative; }
+  .lt { font-size:14px; font-weight:600; margin-bottom:3px; }
+  .lrule { font-size:12px; color:#555; }
+  .lteach { font-size:11px; color:#1565c0; margin-top:5px; font-weight:600; }
+  .core { position:absolute; top:8px; right:8px; font-size:10px; background:#2e7d32; color:#fff; padding:1px 7px; border-radius:999px; }
+  .principle { border-left:4px solid #4caf50; background:#f1f8e9; padding:12px 16px; border-radius:0 12px 12px 0; font-size:14px; color:#33691e; margin-bottom:18px; }
+</style>
+</head>
+<body>
+
+<h1>📐 数理农场 · MathFarm</h1>
+<p class="subtitle">设计文档 v0.1 · 2026-06-15 · 一款把高数、金融、无穷级数种进土里的模拟经营游戏</p>
+
+<div class="quote">「不是把数学贴在农场上，而是让数学成为农场的土壤本身。」</div>
+
+<h2>一、世界观 & 核心理念</h2>
+<div class="card">
+  <p>玩家是一位「数学农夫」，在一片神奇土地上耕种。这里的作物不产生固定收益——<strong>每一次收割，都是一次数学运算的具现化</strong>。土地本身由不同的「数学性质」构成，季节影响公式参数，好友互动变成数学协作。</p>
+  <p style="margin-top:10px">核心体验目标：<strong>玩家在不知不觉中理解了极限、收敛、复利、导数</strong>，然后某一天突然说「原来高中数学讲的就是这个意思！」</p>
+</div>
+
+<h2>二、作物系统 — 无穷级数田</h2>
+<div class="card">
+  <p>每种作物对应一个<strong>数学级数</strong>。每次收割拿到「第 n 项」，所有收割累计形成「部分和 Sₙ」，右侧实时显示逼近曲线。</p>
+  <table class="crop-table">
+    <tr><th>作物</th><th>级数公式</th><th>极限</th><th>体验感</th></tr>
+    <tr><td>🍓 几何草莓</td><td><span class="formula">aₙ = 10·(½)ⁿ</span></td><td><span class="converge">收敛 → 20</span></td><td>头几次爆收，越收越少，体会「等比级数收敛」</td></tr>
+    <tr><td>🌽 调和玉米</td><td><span class="formula">aₙ = 10/n</span></td><td><span class="diverge">发散 → ∞</span></td><td>收益一直有但慢到让人怀疑，反直觉的发散</td></tr>
+    <tr><td>🍉 交错西瓜</td><td><span class="formula">aₙ = (-1)ⁿ⁺¹·10/n</span></td><td><span class="converge">收敛 → 10·ln2</span></td><td>收成正负横跳，曲线左右震荡逼近目标</td></tr>
+    <tr><td>🎃 阶乘南瓜</td><td><span class="formula">aₙ = 100/n!</span></td><td><span class="converge">收敛 → 100(e-1)</span></td><td>极快收敛，几次就撞顶，感受阶乘的恐怖</td></tr>
+    <tr><td>🍇 π 葡萄</td><td><span class="formula">aₙ = 4·(-1)ⁿ/(2n-1)</span></td><td><span class="converge">收敛 → π·金币</span></td><td>莱布尼茨公式逼近π，收够了解锁「π 勋章」</td></tr>
+    <tr><td>🌻 欧拉向日葵</td><td><span class="formula">aₙ = 1/n²</span></td><td><span class="converge">收敛 → π²/6</span></td><td>巴塞尔问题，收完显示「这就是欧拉的答案」</td></tr>
+  </table>
+  <div style="margin-top:12px">
+    <strong>UI 核心：</strong>每块地旁边有一条<strong>实时折线图</strong>，横轴=收割次数，纵轴=部分和 Sₙ，虚线=理论极限。
+  </div>
+</div>
+
+<h2>三、土地系统 — 微积分地形</h2>
+<div class="card">
+  <div class="two-col">
+    <div>
+      <h3>土地类型</h3>
+      <div class="layer l1"><div class="lt">📈 导数沃土</div><div class="ld">生长速度 = 当前作物产量的导数。产量越高长得越快，正反馈土地。</div></div>
+      <div class="layer l2"><div class="lt">∫ 积分湿地</div><div class="ld">收割奖励 = 生长曲线下方面积（定积分）。种得越久爆发越强。</div></div>
+      <div class="layer l3"><div class="lt">📉 极限荒地</div><div class="ld">初始贫瘠，每轮以 ε→0 速度改良，ε 挑战：误差内完成任务解锁升级。</div></div>
+      <div class="layer l4"><div class="lt">🌀 泰勒温室</div><div class="ld">产量用泰勒展开近似，玩家升级「展开阶数」提升收益精度。</div></div>
+    </div>
+    <div>
+      <h3>天气系统（微分方程驱动）</h3>
+      <div class="layer l1"><div class="lt">☀️ 晴天</div><div class="ld">标准生长 dy/dt = ky（指数增长）</div></div>
+      <div class="layer l2"><div class="lt">🌧️ 雨天</div><div class="ld">连续降雨引入阻尼 dy/dt = ky - cy²（逻辑斯谛增长）</div></div>
+      <div class="layer l3"><div class="lt">❄️ 雪天</div><div class="ld">生长暂停，「冰晶」道具解「冻结方程」解锁新作物</div></div>
+      <div class="layer l4"><div class="lt">🌀 混沌风暴</div><div class="ld">洛伦兹吸引子随机事件，蝴蝶效应彩蛋</div></div>
+    </div>
+  </div>
+</div>
+
+<h2>四、金融系统 — 数学经济层</h2>
+<div class="card">
+  <div class="card-grid">
+    <div><h3>🏦 复利银行</h3><p>存入金币按 <span class="formula">A = P·eʳᵗ</span> 连续复利增长，利率 r 随市场情绪波动（布朗运动模拟）。</p></div>
+    <div><h3>📊 期货市场</h3><p>种下时锁定未来收购价，实际市价与合约价差决定盈亏，体验对冲与套保。</p></div>
+    <div><h3>📉 波动率农场</h3><p>价格服从 <span class="formula">dS = μS·dt + σS·dW</span>（几何布朗运动），波动越大产量越高但风险越大。</p></div>
+    <div><h3>💹 组合种植</h3><p>同时种多种作物，收益 = 加权平均，玩家调权重体验马科维茨投资组合理论。</p></div>
+  </div>
+  <div class="divider"></div>
+  <h3>🎰 衍生品（高级）</h3>
+  <p>• <strong>看涨期权</strong>：花小钱买未来固定价格收割的权利，Black-Scholes 公式定价显示在界面</p>
+  <p>• <strong>套利机会</strong>：好友农场与自己作物价差 > 运输成本时，系统提示「套利窗口开启 3 分钟」</p>
+</div>
+
+<h2>五、社交系统 — 数学协作</h2>
+<div class="card">
+  <div class="two-col">
+    <div>
+      <h3>🤝 级数接力</h3>
+      <p>你贡献奇数项，好友贡献偶数项，合并成合作级数，共享收敛奖励，合作比独种快 2 倍。</p>
+      <h3>😈 偷菜升级版</h3>
+      <p>偷走「第 n 项」，同时给对方留下「导数凭证」——对方能看到被偷次数与速率曲线。</p>
+    </div>
+    <div>
+      <h3>🏆 排行榜</h3>
+      <p>• 部分和榜：谁的 Sₙ 最接近理论极限</p>
+      <p>• 收敛速度榜：误差下降最快</p>
+      <p>• 财富榜：复利银行总资产</p>
+      <p>• 混沌榜：风暴天气存活最久</p>
+      <h3>📬 数学挑战信</h3>
+      <p>向好友发「用 10 次收割让 |Sₙ - L| &lt; 0.1」，完成获双倍奖励。</p>
+    </div>
+  </div>
+</div>
+
+<h2>六、成就 & 称号</h2>
+<div class="card">
+  <div style="margin-bottom:10px">
+    <span class="badge gold">🏅 ε 猎人</span>
+    <span class="badge gold">🌀 发散见证者</span>
+    <span class="badge gold">π 收割者</span>
+    <span class="badge silver">📐 泰勒学徒</span>
+    <span class="badge silver">🏦 复利信徒</span>
+    <span class="badge silver">🌧️ 逻辑斯谛农夫</span>
+    <span class="badge diamond">💎 欧拉传人</span>
+    <span class="badge diamond">♾️ 无穷大掌门</span>
+    <span class="badge diamond">🌀 蝴蝶农场主</span>
+  </div>
+  <p>称号提供真实 buff：「π 收割者」让 π 葡萄每次多给 0.01π 金币；「复利信徒」把银行利率 r 提升 10%。</p>
+</div>
+
+<h2>七、迭代计划</h2>
+<div class="phase-row">
+  <div class="phase"><div class="num">01</div><div class="name">级数核心</div><ul><li>6 种级数作物</li><li>实时收敛曲线</li><li>4 种地形</li><li>基础收割循环</li></ul></div>
+  <div class="phase"><div class="num">02</div><div class="name">金融层</div><ul><li>复利银行</li><li>期货市场</li><li>价格波动</li><li>组合种植</li></ul></div>
+  <div class="phase"><div class="num">03</div><div class="name">社交协作</div><ul><li>级数接力</li><li>数学挑战信</li><li>偷菜升级版</li><li>排行榜</li></ul></div>
+  <div class="phase"><div class="num">04</div><div class="name">深水区</div><ul><li>Black-Scholes 期权</li><li>混沌天气</li><li>泰勒温室</li><li>AR 模式（远期）</li></ul></div>
+</div>
+
+<h2>八、土地图鉴 — 多元土地系统</h2>
+<div class="principle">核心原则：每种土地 = 一个数学概念的可玩化身；土地的「收割规则」就是那个概念的核心直觉。玩家按等级解锁生态区，从最直观的级数收敛，一路走到混沌与傅里叶。共 6 生态区、20 种土地。</div>
+
+<div class="biome">
+  <div class="bhead"><span class="bicon">🌾</span><span class="bname">级数高原</span><span class="btag">无穷级数 · 入门</span></div>
+  <div class="lands">
+    <div class="land"><span class="core">已锁定核心</span><div class="lt">🍓 级数田</div><div class="lrule">种一次永不清空，每次收割拿第 n 项 aₙ，部分和 Sₙ 逼近极限</div><div class="lteach">收敛 / 发散 / 极限</div></div>
+    <div class="land"><div class="lt">🍉 交错梯田</div><div class="lrule">正负项交替，收成左右横跳着收敛（莱布尼茨判别）</div><div class="lteach">交错级数</div></div>
+    <div class="land"><div class="lt">⚖️ 比较裁判田</div><div class="lrule">两块地赛跑，押注谁先收敛，用比较判别法预判</div><div class="lteach">比较 / 比值判别法</div></div>
+    <div class="land"><div class="lt">🌻 巴塞尔花田</div><div class="lrule">aₙ=1/n²，收够后浮现「π²/6」——欧拉的答案</div><div class="lteach">p-级数 / 巴塞尔问题</div></div>
+  </div>
+</div>
+
+<div class="biome">
+  <div class="bhead"><span class="bicon">🏞️</span><span class="bname">微积分湿地</span><span class="btag">导数 · 积分 · 极限</span></div>
+  <div class="lands">
+    <div class="land"><div class="lt">∫ 积分湿地</div><div class="lrule">收割奖励 = 生长曲线下方面积，你自己选何时收，越久面积越大</div><div class="lteach">定积分 / 累积</div></div>
+    <div class="land"><div class="lt">📈 导数沃土</div><div class="lrule">产量 = 瞬时增长率，在「长得最快的拐点」收割收益最高 → 时机小游戏</div><div class="lteach">导数 / 拐点</div></div>
+    <div class="land"><div class="lt">📉 极限荒地</div><div class="lrule">产量沿渐近线爬升，越接近上限奖励越高但越慢，ε 挑战</div><div class="lteach">渐近线 / ε-极限</div></div>
+    <div class="land"><div class="lt">🦊 微分方程池</div><div class="lrule">养狐狸和兔子，数量按 Lotka-Volterra 周期振荡，维持动态平衡</div><div class="lteach">微分方程组 / 平衡</div></div>
+  </div>
+</div>
+
+<div class="biome">
+  <div class="bhead"><span class="bicon">🎲</span><span class="bname">概率沼泽</span><span class="btag">概率 · 统计</span></div>
+  <div class="lands">
+    <div class="land"><div class="lt">🎰 随机田</div><div class="lrule">每次收割是随机变量，单次飘忽，但多次平均稳稳收敛到期望值</div><div class="lteach">期望 / 大数定律</div></div>
+    <div class="land"><div class="lt">🔔 正态花海</div><div class="lrule">产量服从正态分布，偶尔爆出 3σ 的巨型作物（小概率大惊喜）</div><div class="lteach">正态分布 / 方差</div></div>
+    <div class="land"><div class="lt">🎯 蒙特卡洛池</div><div class="lrule">往池里随机撒种，用落在圆内的比例估算 π，撒得越多越准</div><div class="lteach">蒙特卡洛 / 随机模拟</div></div>
+  </div>
+</div>
+
+<div class="biome">
+  <div class="bhead"><span class="bicon">🔢</span><span class="bname">数论石田</span><span class="btag">数论 · 进阶</span></div>
+  <div class="lands">
+    <div class="land"><div class="lt">🪨 素数田</div><div class="lrule">只在「素数刻」成熟，孪生素数双倍奖励，梅森素数触发彩蛋</div><div class="lteach">素数 / 素数分布</div></div>
+    <div class="land"><div class="lt">🔄 同余轮作</div><div class="lrule">作物按 mod m 决定轮作周期，凑齐一组同余类解锁稀有种</div><div class="lteach">模运算 / 同余</div></div>
+  </div>
+</div>
+
+<div class="biome">
+  <div class="bhead"><span class="bicon">💹</span><span class="bname">金融海岸</span><span class="btag">金融数学</span></div>
+  <div class="lands">
+    <div class="land"><div class="lt">🏦 复利银行田</div><div class="lrule">作物按 A=Pe^(rt) 连续复利涨，越晚收越多，但有「市场崩盘」风险</div><div class="lteach">指数增长 / 复利</div></div>
+    <div class="land"><div class="lt">📊 期货田</div><div class="lrule">种下时锁定未来收购价，市价高低决定你套保赚还是亏</div><div class="lteach">对冲 / 期货</div></div>
+    <div class="land"><div class="lt">🌊 布朗滩</div><div class="lrule">价格走几何布朗运动，波动率 σ 越大产量越高，但也可能血亏</div><div class="lteach">随机过程 / 波动率</div></div>
+    <div class="land"><div class="lt">🎟️ 期权摊</div><div class="lrule">花小钱买「未来固定价收割」的权利，Black-Scholes 实时定价</div><div class="lteach">期权定价</div></div>
+  </div>
+</div>
+
+<div class="biome">
+  <div class="bhead"><span class="bicon">🌀</span><span class="bname">混沌秘境</span><span class="btag">混沌 · 分形 · 高阶</span></div>
+  <div class="lands">
+    <div class="land"><div class="lt">❄️ 分形田</div><div class="lrule">地块递归细分、自相似，总可耕面积 = 一个几何级数，谢尔宾斯基式种植</div><div class="lteach">分形 / 自相似</div></div>
+    <div class="land"><div class="lt">🦋 洛伦兹风暴田</div><div class="lrule">微小的浇水差异引发完全不同的收成，蝴蝶效应彩蛋</div><div class="lteach">混沌 / 敏感依赖</div></div>
+    <div class="land"><div class="lt">🌈 傅里叶花田</div><div class="lrule">把不同「频率种子」叠加，正弦相加合成复杂花型与花期</div><div class="lteach">傅里叶级数</div></div>
+  </div>
+</div>
+
+</body>
+</html>
